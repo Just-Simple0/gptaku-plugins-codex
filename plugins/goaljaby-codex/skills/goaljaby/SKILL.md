@@ -12,26 +12,31 @@ Read these first:
 - `references/compact-strategy.md`
 - `references/task-type-classifier.md`
 - `references/task-type-templates.md`
+- `references/policy-excerpt.md` (언어 §1·§2·§3·§5 + 질문 §1·§2a·§2c 번들 발췌)
 
 질문 정책은 `shared/questioning-policy.md` (특히 §A 렌더링 규칙 + §0~§2)을 상속한다.
 
+## 이 스킬을 쓰는 이유
+
+PRD가 "무엇을 만들지"라면, `/goal`은 "어떻게 끝났음을 증명하고 실패에서 어떻게 돌아올지"의 운영 계약이다. 두 단계 사이의 빈 구간(VALIDATION/RECOVERY/PLAN 작성 + 4,000자 컴팩트 + 사용자 언어 검토 + 골 시작)을 매번 손으로 채우는 대신 자동화한다.
+
 ## 첫 실행 설정 (수동 — 훅 아님)
 
-> Codex 플러그인은 hooks를 지원하지 않는다. 본진 goaljaby의 `setup/setup.sh`(자동 스타·업데이트 체크)는 **이식하지 않는다.**
+> Codex 플러그인은 hooks를 지원하지 않는다. 원판 goaljaby의 `setup/setup.sh`(첫 실행 안내·업데이트 체크)는 **이식하지 않는다.**
 > 별도 부트스트랩이 필요하면 사용자가 직접 실행하는 1회 단계로만 안내한다(현재 이 스킬은 외부 부트스트랩이 필요 없다). 이 스킬은 PRD 읽기·검토 문서 쓰기 외에 아무 부수효과도 만들지 않는다.
 
-## Claude Code 판과의 차이 (왜 Codex 판이 따로 있나)
+## 원판(본진)과의 차이 (왜 Codex 판이 따로 있나)
 
-본진 goaljaby는 "Claude Code 전용"이다. 마지막에 어시스턴트가 응답의 *마지막 줄*로 `/goal`을 출력하면 Claude Code가 그 줄을 다음 턴 입력으로 처리해 골 루프를 자동 시작한다. **Codex에는 이 메커니즘이 없다** — 스킬이 슬래시 명령을 마지막 줄로 "자동 발사"할 수 없다.
+원판 goaljaby는 호스트 CLI 전용이다. 마지막에 어시스턴트가 응답의 *마지막 줄*로 `/goal`을 출력하면 호스트가 그 줄을 다음 턴 입력으로 처리해 골 루프를 자동 시작한다. **Codex에는 이 메커니즘이 없다** — 스킬이 슬래시 명령을 마지막 줄로 "자동 발사"할 수 없다.
 
 대신 Codex에는 **네이티브 `/goal`** (codex 0.139에서 `goals` 기능 stable=true)과 `/plan` 모드, 그리고 `PLANS.md`/ExecPlan 관례가 있다. 그래서 이 판은:
 
-- 본진의 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS + goal-command)을 그대로 한국어로 생성하고,
+- 원판의 검토 문서 5종(VALIDATION/RECOVERY/PLAN/PROGRESS + goal-command)을 그대로 `output_lang`(사용자 언어)으로 생성하고,
 - 추가로 `PLANS.md` ExecPlan 파일(**Progress / Validation / Decision-Log** 섹션)을 생성해 본진 5종을 그 위에 매핑한다.
 - 마지막에 슬래시 명령을 자동 발사하는 대신, 사용자가 **복사해서 실행**할 `/goal` 명령 한 줄을 제시한다.
 - objective는 ≤ 4,000자로 유지하고, **파일 포인터 패턴**을 쓴다 — objective 본문이 `./PLANS.md`를 가리킨다.
 
-## 언어 정책 (shared/language-policy.md 상속)
+## 언어 정책 (shared/language-policy.md · references/policy-excerpt.md 상속)
 
 > **출력 언어 = 사용자 요청 언어(`output_lang`)**. 본문을 읽기 전에 §1 자동 감지로 잠근다:
 > 요청 텍스트의 언어 → 없으면 직전 대화 언어 → 둘 다 없으면(빈 호출) 영어. **한국 제작이라고 한국어를 기본값으로 두지 말 것.**
@@ -53,6 +58,7 @@ PRD가 없으면 `show-me-the-prd` 스킬로 위임한다 (Step 0). 인수 파�
 - 인수 없음 → §A 번호 블록으로 PRD 디렉토리 경로를 묻는다 (아래 Step 0-B). PRD 자체가 없으면 `show-me-the-prd` 위임 옵션을 1번으로 제시.
 - 절대/상대 경로 → 그 경로를 `prd_dir`로 사용.
 - "분석 [경로]" → 기존 산출물 검토 모드 (덮어쓰기 전 확인).
+- PRD 디렉토리에 `references/` + `sources.json`(디자인 레퍼런스, show-me-the-prd v0.10+ 산출물)이 있으면 Step 1에서 감지해 Step 5에서 PLAN/VALIDATION에 승계한다. 없으면 아무 변화 없음 — 재수집하지 않는다.
 
 ## 출력
 
@@ -121,7 +127,9 @@ PRD 본문을 읽고 추출:
 - acceptance criteria (없으면 사용자에게 경고)
 - non-goals
 - open questions
+- **가정 원장 감지**: PRD에 가정 원장이나 잔여 가정 목록이 있으면 원문 위치와 항목별 내용·근거·영향·확인 상태를 보존한다. 미확정 가정을 확정된 요구사항으로 바꾸지 않는다. 원장이 없으면 새 원장이나 추가 인터뷰를 강제하지 않는다.
 - 작업 유형 추정 (한/영 키워드 동시 매칭 — `references/task-type-classifier.md` 참조)
+- **디자인 레퍼런스 감지**: PRD 디렉토리에 `references/` 폴더 + `sources.json`이 있으면(show-me-the-prd v0.10+ 산출물) `sources.json`의 스타일 키워드(`query.style`)와 keep 이미지 목록을 기억한다. 없으면 이 항목은 이후 단계에서 전부 무시 — 재수집하지 않는다.
 
 ### Step 2: 운영 컨텍스트 확정 (자동)
 **타입**: 자동 (인터뷰 없음)
@@ -169,6 +177,24 @@ PRD acceptance criteria를 그룹화하여 마일스톤 초안 생성. ≤5개 �
 
 CLI 슬롯은 **codex 전용 고정 문구**로 치환한다:
 - `{RETRY_LIMIT_ACTIONS}` / `{RETRY_PAUSE_PHRASE}` → "자체 수정을 멈추고 PROGRESS.md(및 PLANS.md의 Decision-Log)에 실패 내역을 기록한 뒤 사용자의 결정을 기다린다." (codex `/goal`은 일시정지 대신 보고-후-대기로 운영한다.)
+
+**가정 원장 승계 (Step 1에서 감지된 경우에만)**:
+- `PLAN.md` 참조 문서 목록에 원장 위치를 남기고, 기존 항목 식별자가 있으면 그대로 사용한다.
+- 결과에 영향을 주는 미확정 가정은 `VALIDATION.md`의 해당 완료 기준에 확인 방법을 연결한다. 지금 확인할 수 없으면 미검증으로 남기며 통과로 처리하지 않는다.
+- 실행을 막는 가정과 아직 확인하지 못한 항목은 `PROGRESS.md`의 리스크·다음 단계(및 PLANS.md `## Decision-Log`)에 남긴다. 이미 확인된 항목을 다시 미결로 만들지 않는다.
+- `goal-command.md`에는 원장 전체를 복사하지 않는다. 기존 PLAN/VALIDATION/PLANS 문서 참조를 통해 전달하여 4,000자 예산을 유지한다.
+
+**디자인 레퍼런스 승계 (Step 1에서 감지된 경우 + UI 관련 작업 유형일 때만)**:
+- `PLAN.md` 참조 문서 목록에 `PRD/references/ (디자인 레퍼런스 — 스타일: {query.style})` 한 줄 추가. PLANS.md `## 참조 문서`에도 같은 줄을 반영한다.
+- `VALIDATION.md` 시각 검증(또는 수동 확인 절차)에 "UI 산출물이 `PRD/references/`의 레퍼런스 스타일 방향({스타일 키워드})과 부합하는가 — 구현 전 이미지를 열어 방향 확인" 항목 1개 추가.
+- 저작권 가드 1줄 승계: "레퍼런스 이미지는 방향 참고 전용 — 산출물에 복사/재게시 금지."
+- goal-command.md 본문에는 넣지 않는다(4,000자 예산 보호) — 골 세션은 PLAN/VALIDATION/PLANS를 읽으므로 그쪽에서 전달된다.
+
+**멀티에이전트 게이트 승계 (kkirikkiri 설치 시에만)**:
+`ls -d ~/.codex/plugins/cache/*/kkirikkiri*/ 2>/dev/null` (또는 `$PLUGIN_ROOT/../kkirikkiri-codex`)로 kkirikkiri 플러그인이 설치돼 있는지 1회 확인한다. 있으면 RECOVERY.md의 기본 원칙에 다음 1항목을 추가한다 — 골 세션이 스스로 서브에이전트 팀을 만들 때도 같은 규율을 받게 하는 결선이다:
+- "골 작업 중 런타임 서브에이전트 팬아웃·팀 실행을 사용할 때는 kkirikkiri 게이트(`coordination-protocols.md`)를 따른다: 팀원 정의에는 경계 블록(tools·write_scope·stop·effort) 명시, 검증 역할은 read-only, 갈림길(비가역·가치충돌)에서만 독립 의견 + 심판 게이트 발동. 설치된 kkirikkiri에 `wf-lint.js`가 있으면 워크플로 스크립트는 발사 전 `node <kkirikkiri>/scripts/wf-lint.js <script>` 통과 필수."
+- PLANS.md `## Decision-Log` 상단 운영 규칙 요약에도 "팀 실행은 RECOVERY.md의 kkirikkiri 게이트를 따른다" 한 줄을 반영한다.
+**kkirikkiri가 없으면 이 항목을 조용히 건너뛴다** — 경고·설치 권유 없이 무동작 (graceful fallback, 미설치 환경을 깨지 않는다).
 
 ### Step 6: goal-command.md 4,000자 자동 컴팩트
 **타입**: prompt + Bash
@@ -299,7 +325,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
    - `<verifiable done condition>` 슬롯은 VALIDATION.md의 필수 검증 + 모든 마일스톤 완료로 채운다 (모호한 "끝낼 때까지" 금지).
    - 명령 본문은 항상 goal-command.md(컴팩트 완료본)와 일치해야 한다 — Step 6/7을 통과한 본문을 그대로 한 줄로 쓴다.
 
-**중요**: Codex 스킬은 마지막 줄로 슬래시 명령을 자동 발사할 수 없다(그건 Claude Code 메커니즘이다). 따라서 이 판은 **복사-실행 핸드오프**로 끝낸다 — 절대 "다음 턴에 자동 시작된다"고 약속하지 말 것.
+**중요**: Codex 스킬은 마지막 줄로 슬래시 명령을 자동 발사할 수 없다(그건 원판 호스트의 메커니즘이다). 따라서 이 판은 **복사-실행 핸드오프**로 끝낸다 — 절대 "다음 턴에 자동 시작된다"고 약속하지 말 것.
 
 ## Settings (가변 요소)
 
@@ -316,6 +342,7 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 - **`references/task-type-classifier.md`** — 한/영 키워드 기반 작업 유형 추정 규칙
 - **`references/task-type-templates.md`** — 작업 유형 6종 × 파일 강조 항목 (`output_lang` additions)
 - **`references/compact-strategy.md`** — 4,000자 자동 컴팩트 5단계 + 한·영 OR PROTECTED_CLAUSES 정규식
+- **`references/policy-excerpt.md`** — 번들 정책 발췌 (언어 §1·§2·§3·§5, 질문 §1·§2a·§2c)
 
 경로 참조 시 `$PLUGIN_ROOT`를 쓴다 (예: `$PLUGIN_ROOT/skills/goaljaby/references/templates.md`).
 
@@ -338,4 +365,5 @@ LLM 인지에만 의존하지 않는다. Bash 도구로 결정론적 검증한�
 - **Codex 전용 핸드오프**: 슬래시 명령 자동 발사 불가 → 복사-실행 `/goal` 명령으로 끝낸다. objective는 ≤4,000자, `./PLANS.md` 파일 포인터.
 - **사람 검토 안전장치 우회 금지**: Step 9 승인 게이트 없이 Step 10이 핸드오프 명령을 제시하지 않는다.
 - **§A 상속**: 모든 선택 질문은 `shared/questioning-policy.md §A` 번호 블록으로. 존재하지 않는 카드 UI를 가정하지 말 것.
+- **승계는 있을 때만**: 가정 원장·디자인 레퍼런스(`references/`+`sources.json`)·kkirikkiri 게이트는 감지·설치된 경우에만 PLAN/VALIDATION/RECOVERY에 주입한다. 없으면 무동작이며 재수집·설치 권유를 하지 않는다.
 - **자기 시연 가능**: 이 스킬 자체를 만드는 작업도 골잡이로 가능하다.

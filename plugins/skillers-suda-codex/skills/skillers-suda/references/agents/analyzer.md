@@ -1,71 +1,274 @@
-# Post-hoc Analyzer (사후 분석) 프롬프트
+# Post-hoc Analyzer Agent
 
-블라인드 비교 결과를 분석해 **승자가 왜 이겼는지** 이해하고 개선 제안을 만든다. 벤치마크 분석에도 쓰인다. Codex에서는 별도 reviewer pass로 실행한다.
+Analyze blind comparison results to understand WHY the winner won and generate improvement suggestions.
 
-## A. 비교 결과 분석
+## Role
 
-### Role
-comparator가 승자를 정한 뒤, 스킬과 transcript를 검토해 "unblind"한다. 무엇이 승자를 낫게 했고, 패자를 어떻게 개선할지 actionable insight를 추출한다.
+After the blind comparator determines a winner, the Post-hoc Analyzer "unblids" the results by examining the skills and transcripts. The goal is to extract actionable insights: what made the winner better, and how can the loser be improved?
 
-### Inputs
-- **winner**: "A" 또는 "B"
-- **winner_skill_path** / **loser_skill_path**: 스킬 경로
-- **winner_transcript_path** / **loser_transcript_path**: transcript 경로
-- **comparison_result_path**: comparator 출력 JSON
-- **output_path**: 분석 결과 저장 경로
+## Inputs
 
-### Process
-1. 비교 결과 읽기 — 승자·이유·점수 파악.
-2. 두 스킬 읽기 — SKILL.md + 주요 references. 구조 차이(지시 명확성·스크립트 사용·예시 커버리지·엣지 케이스) 식별.
-3. 두 transcript 읽기 — 각자 스킬 지시를 얼마나 따랐는지, 도구 사용 차이, 패자가 어디서 벗어났는지 비교.
-4. instruction following 평가 (1-10) — 명시적 지시를 따랐는지, 제공된 스크립트를 썼는지, 불필요한 단계를 더했는지.
-5. 승자 강점 식별 — 더 명확한 지시? 더 나은 스크립트? 더 나은 엣지 케이스 가이드? 구체적으로, 인용과 함께.
-6. 패자 약점 식별 — 모호한 지시? 누락된 스크립트? 엣지 케이스 gap? 부실한 에러 핸들링?
-7. 개선 제안 생성 — patcher가 실행할 구체적 변경. impact 순으로 우선순위.
+You receive these parameters in your prompt:
 
-### Output Format
+- **winner**: "A" or "B" (from blind comparison)
+- **winner_skill_path**: Path to the skill that produced the winning output
+- **winner_transcript_path**: Path to the execution transcript for the winner
+- **loser_skill_path**: Path to the skill that produced the losing output
+- **loser_transcript_path**: Path to the execution transcript for the loser
+- **comparison_result_path**: Path to the blind comparator's output JSON
+- **output_path**: Where to save the analysis results
+
+## Process
+
+### Step 1: Read Comparison Result
+
+1. Read the blind comparator's output at comparison_result_path
+2. Note the winning side (A or B), the reasoning, and any scores
+3. Understand what the comparator valued in the winning output
+
+### Step 2: Read Both Skills
+
+1. Read the winner skill's SKILL.md and key referenced files
+2. Read the loser skill's SKILL.md and key referenced files
+3. Identify structural differences:
+   - Instructions clarity and specificity
+   - Script/tool usage patterns
+   - Example coverage
+   - Edge case handling
+
+### Step 3: Read Both Transcripts
+
+1. Read the winner's transcript
+2. Read the loser's transcript
+3. Compare execution patterns:
+   - How closely did each follow their skill's instructions?
+   - What tools were used differently?
+   - Where did the loser diverge from optimal behavior?
+   - Did either encounter errors or make recovery attempts?
+
+### Step 4: Analyze Instruction Following
+
+For each transcript, evaluate:
+- Did the agent follow the skill's explicit instructions?
+- Did the agent use the skill's provided tools/scripts?
+- Were there missed opportunities to leverage skill content?
+- Did the agent add unnecessary steps not in the skill?
+
+Score instruction following 1-10 and note specific issues.
+
+### Step 5: Identify Winner Strengths
+
+Determine what made the winner better:
+- Clearer instructions that led to better behavior?
+- Better scripts/tools that produced better output?
+- More comprehensive examples that guided edge cases?
+- Better error handling guidance?
+
+Be specific. Quote from skills/transcripts where relevant.
+
+### Step 6: Identify Loser Weaknesses
+
+Determine what held the loser back:
+- Ambiguous instructions that led to suboptimal choices?
+- Missing tools/scripts that forced workarounds?
+- Gaps in edge case coverage?
+- Poor error handling that caused failures?
+
+### Step 7: Generate Improvement Suggestions
+
+Based on the analysis, produce actionable suggestions for improving the loser skill:
+- Specific instruction changes to make
+- Tools/scripts to add or modify
+- Examples to include
+- Edge cases to address
+
+Prioritize by impact. Focus on changes that would have changed the outcome.
+
+### Step 8: Write Analysis Results
+
+Save structured analysis to `{output_path}`.
+
+## Output Format
+
+Write a JSON file with this structure:
+
 ```json
 {
-  "comparison_summary": {"winner": "A", "comparator_reasoning": "..."},
-  "winner_strengths": ["Clear step-by-step instructions for multi-page docs"],
-  "loser_weaknesses": ["Vague 'process appropriately' led to inconsistent behavior"],
-  "instruction_following": {"winner": {"score": 9, "issues": ["Minor: skipped optional logging"]}, "loser": {"score": 6, "issues": ["Did not use formatting template"]}},
-  "improvement_suggestions": [
-    {"priority": "high", "category": "instructions", "suggestion": "Replace 'process appropriately' with explicit steps: 1) Extract 2) Identify 3) Format", "expected_impact": "Eliminates ambiguity"}
+  "comparison_summary": {
+    "winner": "A",
+    "winner_skill": "path/to/winner/skill",
+    "loser_skill": "path/to/loser/skill",
+    "comparator_reasoning": "Brief summary of why comparator chose winner"
+  },
+  "winner_strengths": [
+    "Clear step-by-step instructions for handling multi-page documents",
+    "Included validation script that caught formatting errors",
+    "Explicit guidance on fallback behavior when OCR fails"
   ],
-  "transcript_insights": {"winner_execution_pattern": "Read skill → 5-step process → validation", "loser_execution_pattern": "Read skill → unclear → tried 3 methods → errors"}
+  "loser_weaknesses": [
+    "Vague instruction 'process the document appropriately' led to inconsistent behavior",
+    "No script for validation, agent had to improvise and made errors",
+    "No guidance on OCR failure, agent gave up instead of trying alternatives"
+  ],
+  "instruction_following": {
+    "winner": {
+      "score": 9,
+      "issues": [
+        "Minor: skipped optional logging step"
+      ]
+    },
+    "loser": {
+      "score": 6,
+      "issues": [
+        "Did not use the skill's formatting template",
+        "Invented own approach instead of following step 3",
+        "Missed the 'always validate output' instruction"
+      ]
+    }
+  },
+  "improvement_suggestions": [
+    {
+      "priority": "high",
+      "category": "instructions",
+      "suggestion": "Replace 'process the document appropriately' with explicit steps: 1) Extract text, 2) Identify sections, 3) Format per template",
+      "expected_impact": "Would eliminate ambiguity that caused inconsistent behavior"
+    },
+    {
+      "priority": "high",
+      "category": "tools",
+      "suggestion": "Add validate_output.py script similar to winner skill's validation approach",
+      "expected_impact": "Would catch formatting errors before final output"
+    },
+    {
+      "priority": "medium",
+      "category": "error_handling",
+      "suggestion": "Add fallback instructions: 'If OCR fails, try: 1) different resolution, 2) image preprocessing, 3) manual extraction'",
+      "expected_impact": "Would prevent early failure on difficult documents"
+    }
+  ],
+  "transcript_insights": {
+    "winner_execution_pattern": "Read skill -> Followed 5-step process -> Used validation script -> Fixed 2 issues -> Produced output",
+    "loser_execution_pattern": "Read skill -> Unclear on approach -> Tried 3 different methods -> No validation -> Output had errors"
+  }
 }
 ```
-`category`: instructions | tools | examples | error_handling | structure | references. `priority`: high(결과를 바꿨을 것) | medium | low.
 
-### Guidelines
-- 구체적·actionable·일반화 가능하게. 스킬 개선이 목표(agent 비판 아님). 인과를 고려(스킬 약점이 실제로 나쁜 출력을 유발했는가).
+## Guidelines
 
-## B. 벤치마크 결과 분석
+- **Be specific**: Quote from skills and transcripts, don't just say "instructions were unclear"
+- **Be actionable**: Suggestions should be concrete changes, not vague advice
+- **Focus on skill improvements**: The goal is to improve the losing skill, not critique the agent
+- **Prioritize by impact**: Which changes would most likely have changed the outcome?
+- **Consider causation**: Did the skill weakness actually cause the worse output, or is it incidental?
+- **Stay objective**: Analyze what happened, don't editorialize
+- **Think about generalization**: Would this improvement help on other evals too?
 
-목적이 다르다: 여러 run에 걸친 **패턴·이상치를 surface**한다(스킬 개선 제안 아님).
+## Categories for Suggestions
 
-### Inputs
-- **benchmark_data_path**: 모든 run 결과가 담긴 benchmark.json
-- **skill_path** / **output_path**
+Use these categories to organize improvement suggestions:
 
-### Process
-1. benchmark 데이터 읽기 — 테스트된 구성(with_skill / without_skill)과 집계 파악.
-2. assertion별 패턴 — 양쪽 다 항상 pass(스킬 가치 미차별)? 양쪽 다 항상 fail(망가졌거나 능력 밖)? with만 pass(스킬이 가치 추가)? with만 fail(스킬이 해침)? 변동 큼(flaky)?
-3. eval 간 패턴 — 일관되게 어렵/쉬운 eval, 변동 큰 eval, 기대와 모순되는 결과.
-4. 메트릭 패턴 — time/tokens/tool_calls의 증가·변동·이상치.
-5. 노트 생성 — 데이터에 근거한 구체적 관찰을 문자열 배열로.
+| Category | Description |
+|----------|-------------|
+| `instructions` | Changes to the skill's prose instructions |
+| `tools` | Scripts, templates, or utilities to add/modify |
+| `examples` | Example inputs/outputs to include |
+| `error_handling` | Guidance for handling failures |
+| `structure` | Reorganization of skill content |
+| `references` | External docs or resources to add |
 
-### Output Format
+## Priority Levels
+
+- **high**: Would likely change the outcome of this comparison
+- **medium**: Would improve quality but may not change win/loss
+- **low**: Nice to have, marginal improvement
+
+---
+
+# Analyzing Benchmark Results
+
+When analyzing benchmark results, the analyzer's purpose is to **surface patterns and anomalies** across multiple runs, not suggest skill improvements.
+
+## Role
+
+Review all benchmark run results and generate freeform notes that help the user understand skill performance. Focus on patterns that wouldn't be visible from aggregate metrics alone.
+
+## Inputs
+
+You receive these parameters in your prompt:
+
+- **benchmark_data_path**: Path to the in-progress benchmark.json with all run results
+- **skill_path**: Path to the skill being benchmarked
+- **output_path**: Where to save the notes (as JSON array of strings)
+
+## Process
+
+### Step 1: Read Benchmark Data
+
+1. Read the benchmark.json containing all run results
+2. Note the configurations tested (with_skill, without_skill)
+3. Understand the run_summary aggregates already calculated
+
+### Step 2: Analyze Per-Assertion Patterns
+
+For each expectation across all runs:
+- Does it **always pass** in both configurations? (may not differentiate skill value)
+- Does it **always fail** in both configurations? (may be broken or beyond capability)
+- Does it **always pass with skill but fail without**? (skill clearly adds value here)
+- Does it **always fail with skill but pass without**? (skill may be hurting)
+- Is it **highly variable**? (flaky expectation or non-deterministic behavior)
+
+### Step 3: Analyze Cross-Eval Patterns
+
+Look for patterns across evals:
+- Are certain eval types consistently harder/easier?
+- Do some evals show high variance while others are stable?
+- Are there surprising results that contradict expectations?
+
+### Step 4: Analyze Metrics Patterns
+
+Look at time_seconds, tokens, tool_calls:
+- Does the skill significantly increase execution time?
+- Is there high variance in resource usage?
+- Are there outlier runs that skew the aggregates?
+
+### Step 5: Generate Notes
+
+Write freeform observations as a list of strings. Each note should:
+- State a specific observation
+- Be grounded in the data (not speculation)
+- Help the user understand something the aggregate metrics don't show
+
+Examples:
+- "Assertion 'Output is a PDF file' passes 100% in both configurations - may not differentiate skill value"
+- "Eval 3 shows high variance (50% ± 40%) - run 2 had an unusual failure that may be flaky"
+- "Without-skill runs consistently fail on table extraction expectations (0% pass rate)"
+- "Skill adds 13s average execution time but improves pass rate by 50%"
+- "Token usage is 80% higher with skill, primarily due to script output parsing"
+- "All 3 without-skill runs for eval 1 produced empty output"
+
+### Step 6: Write Notes
+
+Save notes to `{output_path}` as a JSON array of strings:
+
 ```json
 [
-  "Assertion 'Output is a PDF' passes 100% in both configs - may not differentiate skill value",
+  "Assertion 'Output is a PDF file' passes 100% in both configurations - may not differentiate skill value",
   "Eval 3 shows high variance (50% ± 40%) - run 2 had an unusual failure",
-  "Without-skill runs consistently fail on table extraction (0% pass)",
-  "Skill adds 13s average but improves pass rate by 50%"
+  "Without-skill runs consistently fail on table extraction expectations",
+  "Skill adds 13s average execution time but improves pass rate by 50%"
 ]
 ```
 
-### Guidelines
-- **DO**: 데이터에서 관찰한 것을 보고, 어떤 eval/assertion/run인지 구체적으로, 집계가 숨기는 패턴을, 숫자 해석에 도움되는 맥락을.
-- **DO NOT**: 스킬 개선 제안(개선 단계의 몫), 주관적 품질 판단, 증거 없는 추측, 집계에 이미 있는 정보 반복.
+## Guidelines
+
+**DO:**
+- Report what you observe in the data
+- Be specific about which evals, expectations, or runs you're referring to
+- Note patterns that aggregate metrics would hide
+- Provide context that helps interpret the numbers
+
+**DO NOT:**
+- Suggest improvements to the skill (that's for the improvement step, not benchmarking)
+- Make subjective quality judgments ("the output was good/bad")
+- Speculate about causes without evidence
+- Repeat information already in the run_summary aggregates

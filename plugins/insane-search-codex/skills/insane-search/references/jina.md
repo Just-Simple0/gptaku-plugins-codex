@@ -113,11 +113,9 @@ curl -H "X-Respond-With: html" "https://r.jina.ai/{URL}"
 |--------|------|
 | X/Twitter | 402 — Syndication/oEmbed 사용 (twitter.md 참조) |
 | Reddit | 차단 — JSON API 사용 (json-api.md 참조) |
-| 디시인사이드 | 빈 본문 반환 |
-| 에펨코리아 | HTTP 430 |
-| 요즘IT | CloudFront 403 |
-| 네이버 쇼핑 | CAPTCHA |
-| 쿠팡 | WAF 차단 |
+| JS 렌더 커뮤니티 | 빈 본문 반환 — engine/Playwright 폴백 |
+| WAF/봇 차단 (CloudFront·Cloudflare 등) | 403 / HTTP 430 — engine 체인 사용 |
+| CAPTCHA/인증 요구 | 접근 경계 — 인증 필요로 중단 |
 
 
 ## RSS 자동 발견

@@ -1,13 +1,13 @@
 {
   "name": "insane-search-codex",
-  "version": "0.8.2",
-  "description": "Codex-native adaptive access for blocked sites (X/Twitter, Reddit, Stack Overflow, Naver, Coupang, LinkedIn, YouTube) — Phase 0→3 adaptive scheduler with curl_cffi TLS impersonation, yt-dlp, Jina, public APIs, and local Playwright fallback. No API keys, auto dependency install.",
+  "version": "0.16.3",
+  "description": "Codex-native public-content reader for AI agents — reaches public pages, official APIs, and feeds via a Phase 0→3 adaptive access chain (curl_cffi impersonation, mobile/URL transforms, headless-browser fallback). No API keys, auto dependency install. Dual-use developer tool; the user is responsible for lawful, authorized use.",
   "author": {
     "name": "fivetaku",
     "url": "https://github.com/fivetaku"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/insane-search-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/insane-search-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "web-access",
@@ -35,6 +35,10 @@
     "tls-impersonation",
     "playwright",
     "archive",
+    "dcinside",
+    "fmkorea",
+    "yozm",
+    "amp-cache",
     "codex"
   ],
   "skills": "./skills/",

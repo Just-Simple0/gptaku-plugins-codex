@@ -8,6 +8,7 @@ fi
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATE_DIR="$SKILL_DIR/engine/templates"
+NODE_DEPS_DIR="${INSANE_NODE_DEPS_DIR:-$HOME/.insane-search/node}"
 
 python_check() {
   local module="$1"
@@ -18,7 +19,7 @@ PY
 }
 
 need_python=()
-for spec in "curl_cffi:curl_cffi" "bs4:beautifulsoup4" "yaml:pyyaml"; do
+for spec in "curl_cffi:curl_cffi>=0.15.0" "bs4:beautifulsoup4" "yaml:pyyaml" "pypdf:pypdf" "markdownify:markdownify"; do
   module="${spec%%:*}"
   package="${spec##*:}"
   if ! python_check "$module"; then
@@ -52,11 +53,15 @@ if [[ "$INSTALL" != true ]]; then
 fi
 
 if [[ ${#need_python[@]} -gt 0 ]]; then
-  python3 -m pip install --user "${need_python[@]}"
+  python3 -m pip install --user -U "${need_python[@]}"
 fi
 
 if [[ "$need_node" == false ]]; then
-  (cd "$TEMPLATE_DIR" && npm install)
+  # Same location the engine uses for its own first-run install (reused across plugin versions,
+  # injected via NODE_PATH). System Chrome is used via channel:'chrome', so skip the bundled browser.
+  mkdir -p "$NODE_DEPS_DIR"
+  cp "$TEMPLATE_DIR/package.json" "$NODE_DEPS_DIR/"
+  (cd "$NODE_DEPS_DIR" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install)
 fi
 
 echo "bootstrap: install step completed"

@@ -1,12 +1,12 @@
 {
   "name": "docs-guide-codex",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Codex-native official documentation lookup with llms.txt-first retrieval and official fallbacks.",
   "author": {
     "name": "chulrolee"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/docs-guide-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/docs-guide-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "documentation",

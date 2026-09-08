@@ -1,6 +1,6 @@
 # dd-codex
 
-Codex port of the **dd** plugin (v0.3.1) — drop the OS clipboard (text or image) into context and act on it, with no pasting and no boilerplate.
+Codex port of the **dd** plugin (v0.4.3) — drop the OS clipboard (text or image) into context and act on it, with no pasting and no boilerplate.
 
 ## Triggers
 
@@ -23,7 +23,7 @@ Codex port of the **dd** plugin (v0.3.1) — drop the OS clipboard (text or imag
 1. **Capture** — runs `skills/dd/scripts/dd_clipboard.py --json` as its first action. The script writes the clipboard to `~/dd/<date>/<id>/` and prints a JSON manifest.
 2. **Gate** — if `ok` is false, surfaces the error and stops.
 3. **Preview** — shows one line of what was captured so you can catch a stale grab.
-4. **Route** — large or analysis-only captures go to a sub-agent (model pinned to sonnet); small or implementation-needed captures stay in the main session.
+4. **Route** — large or analysis-only captures go to a sub-agent (framed as a lightweight worker; the Codex runtime picks the model); small or implementation-needed captures stay in the main session.
 5. **Read lazily** — text is read by `size_class` (small/medium/large/huge); images are Read to see them visually.
 
 ## Cache

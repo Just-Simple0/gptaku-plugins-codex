@@ -1,13 +1,13 @@
 {
   "name": "kkirikkiri-codex",
-  "version": "0.21.6",
-  "description": "Codex-native agent team assembly and shared-memory orchestration for delegated work.",
+  "version": "0.26.0",
+  "description": "Codex-native team builder from natural language — diagnoses whether to split work, runs Agent Teams or a deterministic Workflow spec with user-chosen model tiers (Fable/Opus/Sonnet, Haiku opt-in), self-run gates (wf-lint / card-lint / done-gate), shared memory and bounded runtime-spawned teammates.",
   "author": {
     "name": "fivetaku",
     "url": "https://github.com/fivetaku"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/kkirikkiri-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/kkirikkiri-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "agents",
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "kkirikkiri Codex",
     "shortDescription": "Assemble and run a Codex-native agent team",
-    "longDescription": "Package the Codex-native `kkirikkiri` workflow with curated prompt references, shared-memory helpers, and chat-first clarification rules for delegated multi-agent work.",
+    "longDescription": "Package the Codex-native `kkirikkiri` workflow: cut-line diagnosis (single session / Agent Teams / Workflow), 2-3 question interview, shared model-tier selection that is preserved into cards and spawns, archetype + domain-card synthesis, execution shapes (parallel / serial / chain / fanout / tournament), external CLI workers (codex / agy / gjc / grok), and the gate scripts (wf-lint, card-lint, done-gate, model-selection, prepare-team) run as explicit checklist steps since Codex plugins have no hooks.",
     "developerName": "GPTaku",
     "category": "Productivity",
     "capabilities": [
@@ -34,8 +34,8 @@
     "termsOfServiceURL": "https://github.com/fivetaku/gptaku_plugins",
     "defaultPrompt": [
       "Assemble a small Codex-native team to research this topic and keep the lead role local.",
-      "Split this delegated coding request into a lead plus bounded worker roles with shared memory.",
-      "Use kkirikkiri to run a research or analysis team and produce a final team report."
+      "Split this delegated coding request into a lead plus bounded worker roles with shared memory and boundary blocks.",
+      "Use kkirikkiri to run a deterministic Workflow spec over these N items with an adversarial-verify stage."
     ],
     "brandColor": "#7C3AED",
     "composerIcon": "./assets/kkirikkiri-codex.svg",

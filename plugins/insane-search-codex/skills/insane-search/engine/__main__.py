@@ -22,6 +22,7 @@ import json
 import sys
 
 from . import fetch
+from .url_masking import mask_url
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,12 +38,26 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Per-attempt timeout seconds (default 25).")
     p.add_argument("--max-attempts", type=int, default=None,
                    help="TOTAL curl-attempt budget. Default: None = exhaustive (honours R6).")
+    p.add_argument("--no-retry", action="store_true",
+                   help="Disable transient-status (429/502/503/504) probe retry.")
+    p.add_argument("--no-extract", action="store_true",
+                   help="Disable content-rescue extraction (PDF/JSON-LD/render-merge); "
+                        "always return the raw response text.")
+    p.add_argument("--no-markdown", action="store_true",
+                   help="Disable markdownification. By default a raw-HTML success is "
+                        "converted to structure-preserving markdown (tables/code kept) "
+                        "via markdownify; this returns the raw HTML instead.")
+    p.add_argument("--maincontent", action="store_true",
+                   help="Strip boilerplate (nav/footer/ads) to the article body via "
+                        "optional resiliparse. Off by default; wins over --markdown.")
     p.add_argument("--no-playwright", action="store_true",
                    help="Skip Playwright fallback (curl-only).")
     p.add_argument("--no-phase0", action="store_true",
                    help="Skip the Phase 0 official-API router (generic grid only).")
     p.add_argument("--json", action="store_true",
                    help="Emit FetchResult as JSON to stdout (content omitted).")
+    p.add_argument("--json-content", action="store_true",
+                   help="Emit metadata, trace and wrapped untrusted text from one fetch; URL fields are masked.")
     p.add_argument("--trace", action="store_true",
                    help="Print per-attempt trace to stderr.")
     return p
@@ -59,6 +74,10 @@ def main(argv: list[str] | None = None) -> int:
             max_attempts=args.max_attempts,
             enable_playwright=not args.no_playwright,
             enable_phase0=not args.no_phase0,
+            enable_extraction=not args.no_extract,
+            enable_retry=not args.no_retry,
+            enable_markdown=not args.no_markdown,
+            enable_maincontent=args.maincontent,
         )
     except Exception as e:
         print(f"engine fatal: {type(e).__name__}: {e}", file=sys.stderr)
@@ -69,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
         for att in result.trace:
             d = att.to_dict()
             imp = d.get("impersonate") or "-"
-            ref = d.get("referer") or "-"
+            ref = mask_url(d.get("referer") or "") or "-"
             print(
                 f"[{d['phase']:<8}] {d['executor']:<18} "
                 f"xform={d['url_transform']:<16} imp={imp:<14} ref={ref:<14} "
@@ -85,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "\n════════════════════════════════════════════════════════════════\n"
             "⚠️  R7 triggered — consider API-first route instead of HTML grid.\n"
-            "   See summary below (or re-run with --trace for full attempt log).\n"
+            "   See summary below; use --trace on the initial fetch for the full attempt log.\n"
             "════════════════════════════════════════════════════════════════",
             file=sys.stderr,
         )
@@ -109,12 +128,23 @@ def main(argv: list[str] | None = None) -> int:
             print("   ➜ must_invoke_playwright_mcp = TRUE — drive MCP Playwright from the agent session.", file=sys.stderr)
         print("════════════════════════════════════════════════════════════════", file=sys.stderr)
 
-    if args.json:
+    if args.json or args.json_content:
         payload = result.to_dict()
+        if args.json_content:
+            payload["final_url"] = mask_url(result.final_url)
+            for attempt in payload["trace"]:
+                attempt["url"] = mask_url(attempt["url"])
+                attempt["referer"] = mask_url(attempt["referer"])
+            payload["untrusted_text"] = result.to_untrusted_text()
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
-        # Default: HTML to stdout, status to stderr.
-        print(result.content, end="")
+        print(result.to_untrusted_text(), end="")
+        if result.prompt_injection_risk in ("medium", "high"):
+            signals = ",".join(result.prompt_injection_signals) or "none"
+            print(
+                f"[engine] prompt_injection_risk={result.prompt_injection_risk} signals={signals}",
+                file=sys.stderr,
+            )
         print(f"\n[engine] ok={result.ok} verdict={result.verdict} "
               f"profile={result.profile_used} attempts={len(result.trace)}",
               file=sys.stderr)

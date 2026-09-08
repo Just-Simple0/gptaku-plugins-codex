@@ -1,12 +1,12 @@
 {
   "name": "vibe-sunsang-codex",
-  "version": "2.1.4",
-  "description": "Codex-native AI collaboration mentor using local Codex session history.",
+  "version": "2.3.0",
+  "description": "Codex-native AI collaboration mentor — analyzes local Codex session history with 6-axis skill evaluation (DECOMP/VERIFY/ORCH/FAIL/CTX/META), 7-level system (L1~L7, 0.5 increments), 4 workspace types (Builder/Explorer/Designer/Operator), incremental re-analysis, and longitudinal growth tracking.",
   "author": {
     "name": "chulrolee"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/vibe-sunsang-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/vibe-sunsang-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "mentoring",
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Vibe Sunsang Codex",
     "shortDescription": "Analyze Codex sessions and coach AI collaboration habits",
-    "longDescription": "Packages the Codex-native vibe-sunsang skill set: onboarding, conversation conversion, retrospectives, mentoring, growth reports, and knowledge-base explanations. It reads local Codex session JSONL files and turns them into coaching signals.",
+    "longDescription": "Packages the Codex-native vibe-sunsang skill set: onboarding, conversation conversion, retrospectives, mentoring, growth reports, and knowledge-base explanations. It reads local Codex session JSONL files (~/.codex/sessions), groups them by working directory, converts them to Markdown with per-session metrics, and turns them into coaching signals. Re-analysis is incremental (only sessions active since the last review), and growth reports lead with one level headline plus up to three next moves.",
     "developerName": "GPTaku",
     "category": "Productivity",
     "capabilities": [

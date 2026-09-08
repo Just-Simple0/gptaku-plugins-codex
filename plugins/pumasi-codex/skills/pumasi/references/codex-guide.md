@@ -1,11 +1,11 @@
 # Codex 특성 및 instruction 작성 가이드
 
-> **Codex는 lead agent와 달리 맥락 추론이 약하다. 하지만 구현력은 충분하다.**
+> **Codex는 호스트(PM)와 달리 맥락 추론이 약하다. 하지만 구현력은 충분하다.**
 > **핵심: 무엇을(시그니처)과 어떻게(제약사항)를 명확히 주면 잘 구현한다.**
 
-## lead agent vs Codex 비교
+## 호스트 vs Codex 워커 비교
 
-| 항목 | lead agent | Codex |
+| 항목 | 호스트 | Codex 워커 |
 |------|--------|-------|
 | 맥락 추론 | 잘함 | 약함 |
 | 코드 구현 | 할 수 있지만 토큰 비쌈 | **빠르고 사용량 넉넉** |
@@ -41,7 +41,7 @@
 ## Codex에게 효과적인 instruction 규칙
 
 ```
-✅ DO (lead agent가 instruction에 포함할 것):
+✅ DO (호스트가 instruction에 포함할 것):
 - 절대 경로로 파일 위치 명시
 - 함수/클래스 시그니처 (body 없이)
 - 타입/인터페이스 정의
@@ -51,7 +51,7 @@
 - 생성할 파일 목록
 - 코딩 스타일 (ESM/CJS, strict mode 등)
 
-❌ DON'T (lead agent가 instruction에 포함하지 말 것):
+❌ DON'T (호스트가 instruction에 포함하지 말 것):
 - 함수/컴포넌트의 본문(body) 코드
 - JSX/HTML 렌더링 마크업
 - 비즈니스 로직 구현 코드

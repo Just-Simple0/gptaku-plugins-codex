@@ -1,12 +1,12 @@
 {
   "name": "git-teacher-codex",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Beginner-friendly Git and GitHub helper for Codex using Korean cloud-folder analogies.",
   "author": {
     "name": "chulrolee"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/git-teacher-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/git-teacher-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "git",

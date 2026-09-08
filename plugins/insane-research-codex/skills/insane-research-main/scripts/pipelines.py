@@ -394,3 +394,29 @@ def get_verification_prompt(claims: List[str], subtopic: str) -> str:
 
 def get_synthesis_prompt(subtopic: str, findings: str) -> str:
     return SYNTHESIS_PROMPT.format(subtopic=subtopic, findings=findings)
+
+
+def strict_verification_handoff(ledger: List[Dict]) -> List[Dict]:
+    """P2 strict mode: pick unresolved/high-risk claims for adversarial re-verification
+    via the deep-research Workflow harness. Returns handoff payloads only (cost control —
+    NOT the whole ledger). Default (non-strict) mode skips this entirely.
+
+    Input: post-validation ledger records (validate_ledger.py schema —
+    claim_id/text/source_ids + status/status_reason; status 분류의 SSOT는
+    validate_ledger.classify_claim). status가 없으면 "모르면 미확정" 원칙에 따라
+    unresolved로 취급한다. high_risk는 작성 단계에서 붙는 선택 플래그.
+
+    Each payload: {"claim_id", "claim", "workflow": "deep-research", "question"}.
+    """
+    handoffs = []
+    for claim in ledger:
+        status = claim.get("status") or "unresolved"
+        if status == "unresolved" or claim.get("high_risk"):
+            text = claim.get("text", "")
+            handoffs.append({
+                "claim_id": claim.get("claim_id", ""),
+                "claim": text,
+                "workflow": "deep-research",
+                "question": claim.get("verification_question") or text,
+            })
+    return handoffs

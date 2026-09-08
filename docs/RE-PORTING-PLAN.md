@@ -148,3 +148,31 @@ Codex CLI(~v0.140, 2026-06)는 본진 Claude Code 플러그인의 거의 모든 
 - ✅ **검증**: 14/14 `validate_plugin.py` pass · 14/14 버전 본진 일치 · 신규 .py 전부 parse · insane-search 엔진 import OK · pumasi imagen 회귀 12/12 PASS · insane-research 게이트 스모크 PASS.
 - ✅ **배포(2026-06-25)**: codex 레포 단일 배포(자체 origin) — sync 커밋 `c884bdf` push. (standalone 레포라 마켓 캐시/installed_plugins.json 파이프라인 무관, 태그 컨벤션 없어 릴리즈 미생성.) `.omc/` 런타임 상태 제거 + `.gitignore` 등재.
 - ✅ **라이선스 웨이브 적용(2026-06-25, 커밋 `b483fa2`)**: 14종 전부 per-plugin `LICENSE`(본진 verbatim·copyright holder 보존: fivetaku 10종 / chulrolee 4종[docs-guide·git-teacher·pumasi·vibe-sunsang]) + `DISCLAIMER.md`(본진 복제, collection 링크만 `gptaku-plugins-codex`로 리포인트). plugin.json `license`는 이미 MIT였음. validate 14/14 유지.
+
+## 8. 갭 최신화 #3 (2026-09-08) — 14종 본진 현행 버전 1:1 재정렬
+
+본진(마켓 클론 `~/.claude/plugins/marketplaces/gptaku-plugins`)과 6월 말 이후 벌어진 갭을 플러그인별 병렬 재포팅으로 닫았다. 정본 SKILL/커맨드/에이전트 내용을 §2 규약(`$PLUGIN_ROOT`·§A 번호 블록·훅 미이식·agents 임베드·commands 병합)으로 재작성하고, 엔진·스크립트·레퍼런스는 1:1 동기화(개인 경로·호스트명만 스크럽)했다.
+
+| 플러그인 | 이전 → 이후 | 비고 |
+|--|--|--|
+| dd | 0.4.2 → 0.4.3 | setup.sh 수정만 — 이식 대상 없음 |
+| docs-guide | 1.4.3 → 1.4.4 | command·agent 잔여분 병합, Anthropic 문서도 llms.txt 경로로 커버 |
+| git-teacher | 1.5.4 → 1.5.5 | 이미 패리티, 잔재 정리 |
+| goaljaby | 0.5.3 → 0.6.3 | 가정 원장·디자인 레퍼런스·멀티에이전트 게이트 승계(kkirikkiri-codex wf-lint 존재 시 활성) |
+| insane-design | 0.5.3 → 0.5.5 | 3 스킬 풀 재작성(309/262/306 → 1152/671/639줄), 예제 코퍼스 131파일 동기화 |
+| insane-research | 2.6.1 → 2.9.0 | verify_report/merge_agent_returns 추가, fan-out을 spawn_agent로 재구성, 테스트 67 통과 |
+| insane-review | 0.5.2 → 0.6.8 | `bin/pack_and_ask.py` 1:1(2650줄), launch_mode·Chat/Work 게이트·identity 결속 |
+| insane-search | 0.8.2 → 0.16.3 | 엔진 48파일 동기화, R7 제거·R8 추가, 오프라인 테스트 본진과 동일 |
+| kkirikkiri | 0.21.6 → 0.26.0 | 훅 게이트 5종을 스킬 내 EXECUTE 단계로 표현, scripts/ 9종 동기화 |
+| nopal | 0.7.4 → 0.7.5 | 축약본 → 정본 병합 복원 |
+| pumasi | 1.11.2 → 1.17.0 | 워커 5종·grok 이미지 백엔드·OpenAI 키 직접호출 금지 원칙 추가, 캡처 테스트 32/32 |
+| show-me-the-prd | 0.8.5 → 0.10.1 | Draft-First 흐름·UI 게이트·Turn 2.5 레퍼런스 |
+| skillers-suda | 1.4.4 → 1.4.5 | 263줄 축약본 → 정본 병합(815줄), 스크립트 6종 추가; `claude -p` 의존 4 스크립트 미이식 |
+| vibe-sunsang | 2.1.4 → 2.3.0 | convert_sessions.py를 Codex rollout JSONL용으로 재작성, AGENTS.md 템플릿 |
+
+부수 수정
+- **`plugins/*/shared/questioning-policy.md`가 지금까지 커밋된 적이 없었다**(레포 루트 `shared/`만 추적). 배포된 포트가 §A 정책 파일을 참조하지만 실제로는 빠져 있던 상태 → 이번 커밋에 포함.
+- plugin.json `homepage`/`repository`를 실제 origin(`fivetaku/gptaku-plugins-codex`)으로 정정(14종).
+- `scripts/validate_packages.py`: 공유 정책 파일·docs·1:1 동기화 코드(engine/tests/bin/scripts)는 잔재 어휘 검사에서 제외, `platform.claude.com` URL 오탐 제거, "external image launcher"는 ERROR→WARNING(grok/codex 백엔드가 imagen.sh를 쓰는 것이 설계). 결과 errors 185 → 0.
+- `tests/test_validate_packages.py` 7건은 HEAD 시점부터 실패(별도 미커밋 검증기 개정안을 전제로 작성됨). 그 개정안은 `git stash`(`wip-2026-06-30-unreviewed-placeholder-pass`)에 보존 — `$PLUGIN_ROOT`를 셸 예시에서 금지하고 `<plugin_root>` 플레이스홀더로 바꾸는 정책 변경을 담고 있어 오너 판단 필요(§2는 `$PLUGIN_ROOT` 1:1로 기록).
+- 검증 명령: `validate_plugin.py`는 PyYAML이 있는 인터프리터(`/usr/bin/python3`)로 실행. 14/14 통과.

@@ -44,7 +44,7 @@ for b in blocks:
 
 ### 실제 사례
 
-**쿠팡 검색 결과** — `CollectionPage` + `ItemList`:
+**커머스 검색 결과 페이지** — `CollectionPage` + `ItemList`:
 ```json
 {
   "@type": "CollectionPage",
@@ -87,7 +87,7 @@ for b in blocks:
 }
 ```
 
-## Next.js RSC 페이로드 (요즘IT 등)
+## Next.js RSC 페이로드
 
 Next.js App Router 사이트는 `self.__next_f.push()` 스크립트에 콘텐츠가 포함됨.
 

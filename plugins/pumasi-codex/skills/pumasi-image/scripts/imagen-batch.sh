@@ -4,8 +4,8 @@
 #
 # batch_json 예시:
 # [
-#   {"intent":"BPTC 4회차 표지","mode":"E","aspect":"16:9","quality":"high","target":"/Users/.../1.png"},
-#   {"intent":"노트북 vs 도서관","mode":"D","aspect":"16:9","quality":"high","target":"/Users/.../2.png"}
+#   {"intent":"BPTC 4회차 표지","mode":"E","aspect":"16:9","quality":"high","target":"$HOME/.../1.png"},
+#   {"intent":"노트북 vs 도서관","mode":"D","aspect":"16:9","quality":"high","target":"$HOME/.../2.png"}
 # ]
 
 set -euo pipefail
@@ -25,9 +25,7 @@ TS=$(date +%Y%m%d-%H%M%S)
 RESULTS="${WORK_DIR}/results-${TS}.jsonl"
 : > "$RESULTS"
 
-# Codex 포트: 플러그인 루트는 $PLUGIN_ROOT. 미설정 시 스크립트 위치에서 역산.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_ROOT="${PLUGIN_ROOT:-$(cd "${SCRIPT_DIR}/../../.." && pwd)}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 IMAGEN_FULL="${PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen-full.sh"
 [[ -x "$IMAGEN_FULL" ]] || chmod +x "$IMAGEN_FULL" 2>/dev/null || true
 
@@ -41,14 +39,16 @@ for i in $(seq 0 $((COUNT - 1))); do
   ASPECT=$(echo "$ENTRY" | jq -r '.aspect')
   QUALITY=$(echo "$ENTRY" | jq -r '.quality')
   TARGET=$(echo "$ENTRY" | jq -r '.target')
+  # 선택: ref = 스타일 앵커 이미지 경로. 앵커 우선 배치(1장 승인 후 나머지가 앵커 참조)용.
+  REFIMG=$(echo "$ENTRY" | jq -r '.ref // empty')
 
-  if PLUGIN_ROOT="$PLUGIN_ROOT" bash "$IMAGEN_FULL" "$INTENT" "$MODE" "$ASPECT" "$QUALITY" "$TARGET" > /dev/null 2>&1; then
+  if bash "$IMAGEN_FULL" "$INTENT" "$MODE" "$ASPECT" "$QUALITY" "$TARGET" "$REFIMG" > /dev/null 2>&1; then
     SUCCESS=$((SUCCESS + 1))
     jq -nc --arg t "$TARGET" --argjson i "$i" \
       '{index:$i,status:"ok",target:$t}' >> "$RESULTS"
   else
     FAILED=$((FAILED + 1))
-    RETRY="PLUGIN_ROOT='$PLUGIN_ROOT' bash $IMAGEN_FULL '$INTENT' '$MODE' '$ASPECT' '$QUALITY' '$TARGET'"
+    RETRY="bash $IMAGEN_FULL '$INTENT' '$MODE' '$ASPECT' '$QUALITY' '$TARGET' '$REFIMG'"
     jq -nc --arg t "$TARGET" --argjson i "$i" --arg r "$RETRY" \
       '{index:$i,status:"fail",target:$t,retry:$r}' >> "$RESULTS"
   fi

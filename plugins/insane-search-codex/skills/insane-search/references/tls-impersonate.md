@@ -61,7 +61,7 @@ generic alias는 항상 최신 버전으로 해석된다. **2026년에 chrome99 
 
 | Alias | 해석 (2026.04) | 용도 |
 |-------|---------------|------|
-| `safari` | safari260 | **한국 사이트 최적** (쿠팡, 에펨코리아) |
+| `safari` | safari260 | **한국 사이트 최적** |
 | `chrome` | chrome146 | 범용 (Cloudflare, Akamai) |
 | `firefox` | firefox135 | chrome/safari 실패 시 대안 |
 | `chrome_android` | chrome131_android | 모바일 API 엔드포인트 |
@@ -84,13 +84,15 @@ firefox133, firefox135
 
 ## WAF별 최적 전략
 
+WAF **제품**별 우선 시도 조합 — 특정 사이트가 아니라 제품 지문 기준 일반 가이드(No-Site-Name Rule).
+
 | WAF | 최적 타겟 | 추가 조건 | 성공률 |
 |-----|-----------|-----------|--------|
-| F5 BIG-IP (쿠팡) | `safari` | `Referer: https://www.coupang.com/` | ~70% |
+| F5 BIG-IP | `safari` | `Referer: <사이트 루트>` | ~70% |
 | Cloudflare (TLS만) | `chrome` | Sec-Fetch-* 헤더 추가 | ~80% |
-| Akamai | `chrome` | 레지덴셜 프록시 병행 | 80-90% |
+| Akamai | `chrome` | — | 80-90% |
 | AWS WAF | `chrome` | — | ~80% |
-| CloudFront (요즘IT) | 불필요 | 일반 curl + Chrome UA로 충분 | 100% |
+| CloudFront | 불필요 | 일반 curl + Chrome UA로 충분 | 100% |
 
 ## 세션과 쿠키
 
@@ -101,10 +103,10 @@ from curl_cffi import requests
 session = requests.Session(impersonate="safari")
 
 # 첫 요청으로 세션 쿠키 획득
-session.get("https://www.coupang.com/")
+session.get("https://example.com/")
 
 # 이후 요청에 쿠키 자동 전달
-resp = session.get("https://www.coupang.com/np/search?q=키보드")
+resp = session.get("https://example.com/search?q=...")
 ```
 
 ## 콤보: nodriver/FlareSolverr → curl_cffi

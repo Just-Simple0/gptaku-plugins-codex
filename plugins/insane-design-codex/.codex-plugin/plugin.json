@@ -1,13 +1,13 @@
 {
   "name": "insane-design-codex",
-  "version": "0.5.3",
+  "version": "0.5.5",
   "description": "Codex-native design system analyze / apply / build / export — extract real CSS into design.md + report.ko.html, apply a design to an existing project, scaffold new artifacts, and export DTCG tokens.json.",
   "author": {
     "name": "fivetaku",
     "url": "https://github.com/fivetaku"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/insane-design-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/insane-design-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "design-system",
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "Insane Design Codex",
     "shortDescription": "Analyze, apply, build, and export real design systems in Codex",
-    "longDescription": "Package the Codex-native `insane-design` (analysis + DTCG export), `insane-apply`, and `insane-build` skills with the bundled example corpus, helper scripts, starter components, and the v3.2 `design.md` contract. Menu selections use the numbered-options chat pattern instead of card UIs; verification is synchronous.",
+    "longDescription": "Package the Codex-native `insane-design` (analysis + DTCG export), `insane-apply`, and `insane-build` skills with the bundled example corpus, helper scripts, starter components, and the v3.2 `design.md` contract. Menu selections use the numbered-options chat pattern instead of card UIs; the deeper verifier is an opt-in background sub-agent spawn.",
     "developerName": "GPTaku",
     "category": "Coding",
     "capabilities": [

@@ -1,6 +1,6 @@
 ---
 name: docs-guide
-description: Fetch and explain official documentation for any library, framework, or service — triggers on questions like "How do I…", "What is…", "공식 문서", "문서 기반으로", version-specific or spec-level queries. Covers everything except Claude Code / Claude Agent SDK / Claude API (those go to claude-code-guide).
+description: Fetch and explain official documentation for any library, framework, API, or service using an llms.txt-first strategy — triggers on "How do I…", "What is…", "How does X work", "Best practice for…" about React, Next.js, Vue, Django, FastAPI, Stripe, Supabase, LangChain and any other library; on explicit doc requests ("공식 문서", "official docs", "문서 기반으로", "docs에서 확인해줘", "React 공식 문서 찾아줘", "fetch the Next.js docs", "공식 문서 URL 알려줘"); on version-specific or spec-level queries (latest model ID, pricing, deprecation, context window); and on questions about the llms.txt standard itself ("llms.txt란 뭐야", "which sites have llms.txt", "documentation for LLMs").
 ---
 
 # docs-guide for Codex
@@ -9,7 +9,7 @@ Read these first:
 - `references/llms-txt-sites.md`
 - `references/fallback-strategies.md`
 
-Load on demand (spec-level or WebFetch workflow questions):
+Load on demand (spec-level or fetch-prompt workflow questions):
 - `references/webfetch-prompts.md`
 - `references/regression-cases.md`
 
@@ -17,12 +17,26 @@ Load on demand (spec-level or WebFetch workflow questions):
 
 ## Scope
 
-Everything EXCEPT Claude Code, Claude Agent SDK, and Claude API (handled by the built-in claude-code-guide agent).
+Any library, framework, API, or service with official documentation — including LLM provider APIs (OpenAI, Anthropic, Google Gemini, etc.) via their `llms.txt` indexes listed in `references/llms-txt-sites.md`.
 
 Trigger on:
 - "How do I…", "What is…", "How does X work", "Best practice for…" about any library or framework
 - Explicit doc requests — "공식문서", "official docs", "문서 기반으로", "docs에서 확인해줘"
 - Version-sensitive or spec-level questions about external libraries
+- Questions about the llms.txt standard itself (what it is, which sites have it, llms.txt vs llms-full.txt)
+
+When a question spans several tools or skills (e.g., "How to use Stripe inside my agent runtime"), this skill owns the external-documentation part only.
+
+---
+
+## Arguments
+
+When invoked as `docs-guide [library] [question]`, parse the leading token(s) as the library and the rest as the topic:
+
+- `docs-guide react useEffect` → Library: React, Question: useEffect
+- `docs-guide next.js app router caching` → Library: Next.js, Question: app router caching
+- `docs-guide fastapi dependency injection` → Library: FastAPI, Question: dependency injection
+- `docs-guide` (no args) → ask which library/framework and which topic (one §A question covering both), unless Step 0 project context makes the library obvious
 
 ---
 
@@ -34,7 +48,7 @@ Per `shared/questioning-policy.md` §2c — if the user already named the librar
 
 If the library OR topic is genuinely ambiguous (e.g., "Router" with no project context), ask exactly ONE numbered-option question per §A below, then proceed.
 
-### §A — Numbered-option format (Codex CLI — no AskUserQuestion)
+### §A — Numbered-option format (Codex CLI has no multiple-choice card UI)
 
 Codex CLI has no card UI. When you must ask, output a chat block:
 
@@ -62,6 +76,7 @@ package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, bui
 Use this for:
 - **Version detection**: `"react": "^19.0.0"` → fetch React 19 docs
 - **Disambiguation**: project has both `react-router-dom` and `express`, user asks "Router" → resolve silently
+- **Skip unnecessary search**: if the library is not installed in the project, say so briefly
 
 Skip this step if the question already names a specific library and version.
 
@@ -145,9 +160,10 @@ Load `references/fallback-strategies.md` and try in order:
 - Filter for `/docs/`, `/guide/`, `/reference/` patterns
 - Fetch the most relevant page
 
-**3d. Platform-specific signals**:
+**3d. Platform-specific signals** (low reliability for Hugo — skip straight to sitemap/GitHub there):
 - `/search/search_index.json` → MkDocs (full page text)
 - `/objects.inv` → Sphinx
+- `<meta name="generator">` → Docusaurus, VitePress
 
 **3e. Search** (last resort):
 - Search `{library name} official documentation {topic}`
@@ -255,6 +271,12 @@ When a query maps to multiple libraries:
 ### Marketing llms.txt
 - `neo4j.com/llms.txt` → marketing index, not Cypher/docs. Use `neo4j.com/docs/` directly.
 
+### Hugo sites
+- No detectable platform signals. Skip platform detection; go to sitemap.xml or GitHub source.
+
+### docs_map.md variant
+- Some sites publish the index under a different filename (e.g., `*_docs_map.md`) instead of `llms.txt`. Same concept: an AI-readable index of every documentation page — treat it exactly like `llms.txt`.
+
 ---
 
 ## Error Handling
@@ -265,7 +287,9 @@ When a query maps to multiple libraries:
 | llms.txt linked URL returns 404 | Strip `.md` extension and retry |
 | Specific doc path 404 | Try parent path for table of contents |
 | GitHub `main` branch 404 | Try `master`, then version-specific branches |
-| WebFetch returns empty/JS content | Try GitHub source or answer from knowledge |
+| Fetch returns empty/JS content | Try GitHub source or answer from knowledge |
+| Fetch fails (network/timeout) | Try an alternative URL, then report |
+| Content is not documentation (marketing, landing page) | Discard and try next strategy |
 | Item in index but detail URL unknown | Re-fetch index with Template 1 from `references/webfetch-prompts.md` — never guess |
 | 404 on guessed URL (spec-level) | STOP guessing. Re-fetch parent index, extract actual hrefs. If still no result → "확인하지 못함" |
 | No documentation found | Inform user, answer from knowledge, suggest they provide the docs URL |
@@ -286,10 +310,11 @@ When a query maps to multiple libraries:
 
 1. **Language** — match the user's language (Korean → Korean, English → English)
 2. **Source citation** — ALWAYS include documentation URL(s) at the end with "Source:" label
-3. **Method transparency** — note retrieval method (llms.txt / GitHub / sitemap / WebSearch)
+3. **Method transparency** — note retrieval method (llms.txt / GitHub / sitemap / web search)
 4. **Code examples** — include them when the official docs provide them
 5. **Version note** — note the version (e.g., "React 19 기준", "as of Next.js 15")
 6. **Conciseness** — answer the specific question; don't dump entire pages
+7. **Token awareness** — for large docs, fetch the index first, then only the specific page needed
 
 ## Output Format
 
@@ -302,7 +327,7 @@ When a query maps to multiple libraries:
 
 ---
 Source: [URL(s) fetched]
-(version: X.Y | method: llms.txt/GitHub/sitemap/WebSearch)
+(version: X.Y | method: llms.txt/GitHub/sitemap/search)
 ```
 
 ### Code-only mode (when user asks for code)

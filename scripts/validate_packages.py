@@ -20,7 +20,7 @@ PLUGINS_DIR = ROOT / "plugins"
 LEGACY_PATTERNS = {
     "AskUserQuestion": re.compile(r"AskUserQuestion"),
     "CLAUDE_PLUGIN_ROOT": re.compile(r"CLAUDE_PLUGIN_ROOT"),
-    ".claude path": re.compile(r"\.claude"),
+    ".claude path": re.compile(r"(?<!platform)\.claude"),
     "Claude Code": re.compile(r"Claude Code"),
     "Claude word": re.compile(r"\bClaude\b"),
     "Task call": re.compile(r"(?<![A-Za-z0-9_])Task\s*\("),
@@ -246,7 +246,23 @@ def scan_text(issues: list[Issue]) -> None:
         if "logs" in rel.parts:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
+        # The shared questioning policy documents the AskUserQuestion→§A substitution
+        # itself, so it must name the original host and tool. Skip legacy-word checks there.
+        # Also skip: planning docs (they describe the originals) and verbatim-synced upstream
+        # code/tests (engine/, tests/, bin/, scripts/) whose comments/fixtures are not port text.
+        skip_legacy = (
+            (rel.name == "questioning-policy.md" and rel.parent.name == "shared")
+            or rel.parts[0] == "docs"
+            or any(part in {"engine", "tests", "bin"} for part in rel.parts[:-1])
+            or (rel.parent.name == "scripts" and path.suffix in {".py", ".sh", ".js", ".cmd", ".mjs"})
+        )
         for label, pattern in LEGACY_PATTERNS.items():
+            if skip_legacy:
+                break
+            if label == "external image launcher" and pattern.search(text):
+                # Deliberate design since pumasi 1.13: grok/codex backends via imagen.sh.
+                issues.append(Issue("WARNING", path, f"legacy residue found: {label}"))
+                continue
             if pattern.search(text):
                 issues.append(Issue("ERROR", path, f"legacy residue found: {label}"))
         for label, pattern in PORT_NOTE_PATTERNS.items():

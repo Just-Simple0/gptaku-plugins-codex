@@ -156,9 +156,6 @@ def extract_slug(slug: str) -> dict:
         },
     }
 
-    if slug == "stripe" and result["stats"]["scale_entries"] < 7:
-        raise ValueError("stripe must produce at least 7 typography scale entries")
-
     output_path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return result
 

@@ -55,7 +55,7 @@ export class ClassName {
 ## 좋은 instruction vs 나쁜 instruction
 
 ```
-❌ 나쁜 instruction (lead agent가 코드를 다 씀):
+❌ 나쁜 instruction (호스트가 코드를 다 씀):
   instruction: |
     IndexCard.tsx를 구현하세요.
     ```tsx
@@ -72,7 +72,7 @@ export class ClassName {
     ```
     위 코드를 그대로 작성하세요.
 
-→ lead agent가 이미 토큰을 다 소비함. Codex는 복사만.
+→ 호스트가 이미 토큰을 다 소비함. Codex는 복사만.
 
 ✅ 좋은 instruction (Codex가 구현함):
   instruction: |
@@ -89,7 +89,7 @@ export class ClassName {
     - Tailwind CSS, 다크 테마 (bg-gray-900 기반)
     - 스케일 안내 텍스트: "0~1000 스케일 | 가중 기하평균 기반"
 
-→ lead agent 토큰 소량. Codex가 실제 구현.
+→ 호스트 토큰 소량. Codex가 실제 구현.
 ```
 
 ---

@@ -9,7 +9,7 @@ Git/GitHub 초기 설정(Phase 1)과 프로젝트 폴더 만들기(Phase 2)를 �
 이미 완료된 단계는 자동으로 스킵한다.
 
 > 설명·교육 시 `git-teacher-help`의 §교육 원칙(`shared/questioning-policy.md` §3 Teaching)을 따른다. 겁먹은 초보에게는 원샷 금지 — 비유로 안심시키며 여러 턴에 걸쳐 손잡고 간다(§2a). 다만 사용자가 그냥 빨리 세팅만 원하면 강의하지 말고 단계만 진행한다(§2c).
-> Codex CLI에는 `AskUserQuestion` 카드 UI가 없다. 결정이 필요한 곳은 `shared/questioning-policy.md` §A의 **채팅 번호형 선택지 블록**으로 묻고, 사용자의 다음 자유 텍스트 답변을 읽는다.
+> Codex CLI에는 객관식 카드 UI가 없다. 결정이 필요한 곳은 `shared/questioning-policy.md` §A의 **채팅 번호형 선택지 블록**으로 묻고, 사용자의 다음 자유 텍스트 답변을 읽는다.
 
 ## Phase 1: 준비하기
 

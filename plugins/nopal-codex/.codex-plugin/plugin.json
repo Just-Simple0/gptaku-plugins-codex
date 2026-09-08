@@ -1,12 +1,12 @@
 {
   "name": "nopal-codex",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Codex-native Google Workspace orchestration through the gws CLI.",
   "author": {
     "name": "chulrolee"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/nopal-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/nopal-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "google-workspace",

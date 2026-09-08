@@ -5,10 +5,10 @@
 ```
 사용자: "품앗이로 Todo 앱 만들어줘"
 
-[Phase 0] lead agent 기획:
+[Phase 0] 호스트(PM) 기획:
 → 기능 설계 + 데이터 모델 + 기획안 → 사용자 승인
 
-[Phase 1] lead agent 태스크 분해:
+[Phase 1] 호스트 태스크 분해:
 Round 1 (병렬):
   - task1: 백엔드 DB + API
     → 시그니처: createTodo(), getTodos(), updateTodo(), deleteTodo()
@@ -23,17 +23,11 @@ Round 1 (병렬):
 Round 2 (후속):
   - task4: 캘린더 뷰 + 드래그 앤 드롭
 
-[Phase 2] 공유 상태 초기화:
-python3 scripts/init_workspace.py --root "$PWD" --task "Todo 앱"
-
-[Phase 3] .pumasi/tasks/에 작업 브리프 작성:
-- owned files
-- required signatures
-- constraints
-- gate commands
-
-[Phase 4] spawn_agent로 worker를 병렬 실행
-[Phase 5] lead agent가 게이트 검증 (tsc -> build -> test)
+[Phase 2] 공유 상태 초기화 + .pumasi/tasks/ 브리프 작성 (시그니처 + 요구사항만!)
+  python3 $PLUGIN_ROOT/skills/pumasi/scripts/init_workspace.py --root "$PWD" --task "Todo 앱"
+[Phase 3] 태스크당 워커 1개 병렬 스폰 (Codex 멀티에이전트 또는 codex 비대화형 세션)
+[Phase 4] 워커 완료 대기 — .pumasi/reports/ 수집
+[Phase 5] 호스트가 게이트 검증 (tsc → build → test)
 [Phase 6] 통합 + 완성
 ```
 
@@ -48,33 +42,34 @@ Round 2 (후속):
   task4: 인증 API 엔드포인트 (routes/auth.ts) ← task1,2,3 완료 후
 ```
 
-## .pumasi/tasks 브리프 예시
+## .pumasi/tasks 브리프 예시 (`.pumasi/tasks/token-utils.md`)
 
 ```markdown
 # token-utils
 
-## Owned files
+## 작업
+src/auth/token.ts를 구현하세요.
 
-- src/auth/token.ts
+## 시그니처
+export function generateToken(userId: string, role: string): string
+export function verifyToken(token: string): { userId: string; role: string } | null
 
-## Signatures
-
-- export function generateToken(userId: string, role: string): string
-- export function verifyToken(token: string): { userId: string; role: string } | null
-
-## Requirements
-
+## 요구사항
 - jsonwebtoken 라이브러리 사용 (다른 라이브러리로 대체 금지)
 - 필수 import: import jwt from 'jsonwebtoken'
 - 만료 시간: 7일
 - secret: process.env.JWT_SECRET
 - verifyToken은 만료/무효 토큰에 null 반환
+
+## 제약사항
 - TypeScript strict mode, ESM
 - 에러 시 throw 대신 null 반환
 
-## Gates
+## 게이트 (호스트가 실행)
+- 타입 체크: `npx tsc --noEmit src/auth/token.ts`
+- 라이브러리 확인: `grep -q 'jsonwebtoken' src/auth/token.ts`
+- 시그니처 확인: `grep -q 'generateToken' src/auth/token.ts && grep -q 'verifyToken' src/auth/token.ts`
 
-- npx tsc --noEmit src/auth/token.ts
-- grep -q 'jsonwebtoken' src/auth/token.ts
-- grep -q 'generateToken' src/auth/token.ts && grep -q 'verifyToken' src/auth/token.ts
+## owned files
+- src/auth/token.ts (다른 워커가 같은 레포를 동시에 편집 중 — 이 파일 밖은 건드리지 않는다)
 ```

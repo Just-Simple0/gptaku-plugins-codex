@@ -1,13 +1,13 @@
 {
   "name": "pumasi-codex",
-  "version": "1.11.2",
-  "description": "Codex-native parallel coding orchestration with a bundled image companion skill.",
+  "version": "1.17.0",
+  "description": "Codex-native parallel coding orchestration (Codex / grok / cursor-agent / gjc / agy / claude workers) with a bundled image companion skill (native image tool, optional Grok image_gen backend).",
   "author": {
     "name": "chulrolee",
     "url": "https://github.com/fivetaku"
   },
-  "homepage": "https://github.com/fivetaku/gptaku_plugins/tree/main/codex-marketplace/plugins/pumasi-codex",
-  "repository": "https://github.com/fivetaku/gptaku_plugins",
+  "homepage": "https://github.com/fivetaku/gptaku-plugins-codex/tree/main/plugins/pumasi-codex",
+  "repository": "https://github.com/fivetaku/gptaku-plugins-codex",
   "license": "MIT",
   "keywords": [
     "codex",

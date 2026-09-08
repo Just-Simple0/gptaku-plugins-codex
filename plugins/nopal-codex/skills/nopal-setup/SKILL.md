@@ -131,11 +131,11 @@ gws auth status
 
 | 증상 | 원인 | 해결 방법 |
 |------|------|----------|
-| `Token expired` | OAuth 토큰 만료 | `gws auth login` 재실행 후 export 명령 재실행 |
+| `Token expired` | OAuth 토큰 만료 | `gws auth login` 재실행 후 export + `chmod 600` 재실행 |
 | `Invalid credentials` | 토큰 파일 손상 | `gws auth logout` 후 재로그인 |
 | `액세스 차단됨` / `Access blocked` (403) | Test user 미등록 | GCP 콘솔 → Test users → 본인 이메일 추가 |
 | `invalid_scope` (400) | 스코프 과다 (25개 초과) | 불필요한 API 비활성화 또는 새 프로젝트 생성 |
-| `No credentials provided` (401) | Keyring 접근 불가 | `gws auth export --unmasked 2>/dev/null \| grep -v '^Using keyring' > ~/.config/gws/credentials.json` |
+| `No credentials provided` (401) | Keyring 접근 불가 | `gws auth export --unmasked 2>/dev/null \| grep -v '^Using keyring' > ~/.config/gws/credentials.json && chmod 600 ~/.config/gws/credentials.json` |
 | 브라우저가 안 열림 | URL 자동 오픈 미지원 | 터미널에 표시된 URL을 직접 브라우저에 붙여넣기 |
 | 조직 계정 제한 | Google Workspace 관리자 정책 | 관리자에게 gws CLI 앱 허용 요청 |
 | 프로젝트 ID 중복 | 이미 사용 중인 ID | 뒤에 랜덤 숫자를 변경하여 재시도 |

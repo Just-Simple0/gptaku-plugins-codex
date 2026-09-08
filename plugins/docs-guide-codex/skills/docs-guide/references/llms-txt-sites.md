@@ -139,7 +139,7 @@ Last verified: 2026-05-04
 | Library/Service | llms.txt URL |
 |----------------|-------------|
 | OpenAI | https://developers.openai.com/api/docs/llms.txt |
-| Anthropic (Claude API) | https://platform.claude.com/llms.txt |
+| Anthropic API | https://platform.claude.com/llms.txt |
 | Google Gemini API | https://ai.google.dev/gemini-api/docs/llms.txt |
 | xAI (Grok) | https://docs.x.ai/llms.txt |
 | Mistral | https://docs.mistral.ai/llms.txt |
@@ -150,13 +150,13 @@ Last verified: 2026-05-04
 | Anyscale | https://docs.anyscale.com/llms.txt |
 
 > **OpenAI URL 변경**: `platform.openai.com/docs/llms.txt`는 301 redirect됨. `developers.openai.com/api/docs/llms.txt`가 canonical.
-> **Anthropic URL 변경**: 기존 `docs.anthropic.com`은 `platform.claude.com`으로 마이그레이션됨. claude-code-guide는 Claude Code/SDK 담당, docs-guide는 일반 Claude API/모델 정보 fetch에 사용 가능.
+> **Anthropic URL 변경**: 기존 `docs.anthropic.com`은 `platform.claude.com`으로 마이그레이션됨. 모델 capability / pricing / API 레퍼런스는 이 llms.txt에서 직접 fetch.
 > **Gemini 비표준 경로**: `ai.google.dev/llms.txt`는 404. `gemini-api/docs/llms.txt`가 정확한 경로 (Algolia처럼 비표준).
 
 > ⚠️ **LLM Provider 모델 페이지 주의 (v1.3.3)**:
 > 신규 모델은 `*-preview`, `*-beta`, `*-canary`, `*-experimental`, `*-exp`, `*-rc` 같은 접미사로 노출되는 경우 매우 흔하다.
 > 예: `gemini-3-pro-preview`, `o1-preview-2024-09-12`, `claude-opus-4-7`, `gpt-5-2`.
-> **모델 ID/spec 질문 시 인덱스 페이지에서 actual href 추출 필수** — 자연 이름 추측 금지.
+> **모델 ID/spec 질문 시 인덱스 페이지에서 actual href 추출 필수** — 자연 이름(`gemini-3.5`, `claude-4.7`, `o1`) 추측 금지.
 > 추출 방법: `references/webfetch-prompts.md` Template 1 사용.
 > 회귀 방지: `references/regression-cases.md` 8 케이스로 매 릴리즈 전 수동 검증.
 
@@ -205,7 +205,7 @@ Last verified: 2026-05-04
 | React Native | https://reactnative.dev/llms.txt |
 | Expo | https://docs.expo.dev/llms.txt |
 
-> **Routing note**: Claude Code (CLI), Claude Agent SDK 질문은 built-in `claude-code-guide` agent가 우선 담당. Claude API / 모델 capability / pricing 등 일반 정보는 docs-guide가 `platform.claude.com/llms.txt`로 직접 fetch.
+> **Routing note**: LLM provider API / 모델 capability / pricing 질문은 각 provider의 llms.txt(예: `platform.claude.com/llms.txt`, `developers.openai.com/api/docs/llms.txt`)에서 직접 fetch. 인덱스만 보고 답하지 말고 spec-level 규칙(SKILL.md)대로 detail 페이지까지 내려간다.
 
 ## URL Patterns to Try
 
@@ -222,5 +222,5 @@ Fetch the URL. A valid llms.txt:
 - Returns HTTP 200
 - Contains structured text with links to documentation pages
 - May include section headers, page titles, and URLs
-- Note: some sites redirect (e.g., vitejs.dev → vite.dev). Follow redirects.
-- Note: some sites serve llms.txt at non-root paths (e.g., Algolia at `/doc/llms.txt`)
+- Note: some sites redirect (e.g., vitejs.dev → vite.dev, neon.tech → neon.com). Follow redirects.
+- Note: some sites serve llms.txt at non-root paths (e.g., Algolia at `/doc/llms.txt`, not `/llms.txt`)

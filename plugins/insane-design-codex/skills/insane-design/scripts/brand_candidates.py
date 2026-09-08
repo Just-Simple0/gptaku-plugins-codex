@@ -135,8 +135,10 @@ def extract_semantic_brand_vars(css: str, resolved: dict | None = None) -> list[
     # Step 2: 🆕 v3.2 — var() 체인 해결된 토큰 (resolved_tokens.json 활용)
     # Ferrari/Audi 같은 짧은 prefix 사이트에서 모든 토큰이 var() 체인이라 직접 hex 정규식이 miss하는 케이스 보완.
     if resolved and isinstance(resolved, dict):
-        # resolved_tokens.json 형식: { "tokens": [{"name": "--f-color-accent-100", "terminal_hex": "#DA291C"}, ...] }
-        # 또는 단순 dict: { "--f-color-accent-100": "#DA291C", ... }
+        # 3가지 입력 형식 지원:
+        #   1) var_resolver.py 실제 출력: { "samples": { "--f-color-accent-100": {"raw","resolved":"#DA291C","chain"} }, ... }
+        #   2) legacy: { "tokens": [{"name": "--f-color-accent-100", "terminal_hex": "#DA291C"}, ...] }
+        #   3) legacy: 단순 flat dict { "--f-color-accent-100": "#DA291C", ... }
         items: list[tuple[str, str]] = []
         if "tokens" in resolved and isinstance(resolved["tokens"], list):
             for entry in resolved["tokens"]:
@@ -145,6 +147,15 @@ def extract_semantic_brand_vars(css: str, resolved: dict | None = None) -> list[
                 name = entry.get("name", "")
                 terminal = entry.get("terminal_hex") or entry.get("value") or entry.get("resolved")
                 if name and terminal and isinstance(terminal, str) and terminal.startswith("#"):
+                    items.append((name, terminal))
+        elif isinstance(resolved.get("samples"), dict):
+            # 🆕 var_resolver.py resolve_slug() 실제 출력 형식.
+            # samples = { name: {"raw": ..., "resolved": "#hex" | None, "chain": [...]} }
+            for name, details in resolved["samples"].items():
+                if not isinstance(details, dict):
+                    continue
+                terminal = details.get("resolved")
+                if name and isinstance(terminal, str) and terminal.startswith("#"):
                     items.append((name, terminal))
         else:
             for name, value in resolved.items():
