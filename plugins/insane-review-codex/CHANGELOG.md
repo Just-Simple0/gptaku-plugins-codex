@@ -1,7 +1,23 @@
 # Changelog — insane-review-codex
 
 본진판 `insane-review`의 기능 업데이트를 Codex 포트로 반영한 이력.
-엔진(`bin/pack_and_ask.py`)은 본진 `bin/pack_and_ask.py`와 1:1로 동일한 순수 Python이다.
+엔진은 순수 Python이며 Unreleased부터 Codex 분기 수정을 포함한다.
+
+## Unreleased
+
+- 실제 ChatGPT 전송·회수 검증(2026-10-01)에서 확인한 회수 결함 수정: ① 긴 user 메시지가 접혀(`… 더 보기`) 표시되고 마크다운 렌더링이 백틱을 지워 본문 해시가 불일치하던 문제 → 접힘 접미 제거 후 문자·숫자 골격 해시(`sent_text_skeleton_sha256`)도 인정(구 manifest는 정확 해시만). ② 코드 블록이 있는 응답은 본문 안에 `복사` 버튼이 여러 개라 완료 판정이 영구 실패하던 문제 → 어시스턴트 노드 밖 턴 툴바 복사 버튼을 우선. ③ `column-reverse` 스레드(scrollTop=0이 맨 아래)에서 `tail_confirmed`가 오판하던 문제. ④ SPA가 프로젝트 슬러그를 잠깐 떼는 URL 변화를 대화 이탈로 오판하던 문제 → `/c/<대화ID>`로 결속 비교. 응답 저장 시 `ChatGPT 답변:` 접두어 제거. 실행 단계 실패 시 고정 목록에 있는 사유만 정제 출력(그 외는 예외 클래스명).
+- 두 번째 독립 리뷰(실제 전송·회수 후) 반영: ① 업로드 항목 소유권을 "+" 버튼에 정렬·인접한 메뉴로 한정(실측: 메뉴에는 `aria-controls`/`id`가 없어 위치 관계로 판정, 새 채팅·프로젝트 화면 모두 left 오프셋 0·간격 20px) — 아니면 파일을 전달하지 않음. ② user 본문 확인을 지문(`sent_text_fingerprint`: lite/골격/숫자/연산자 해시, 평문 미저장)으로 교체해 접힘·마크다운은 허용하되 `x > 0`/`x < 0`, `3.5`/`35` 같은 의미 변경은 거부. ③ 턴 완료 증거는 어시스턴트 노드 밖 툴바의 유일한 `복사` 버튼뿐(코드 헤더 버튼 단독 불인정). ④ 업로드 진행 표시 규칙을 첨부 확인과 최종 전송 가드가 공유(`role=progressbar`의 `aria-label` 포함), `uploading... <파일명>`을 놓치던 정규식 버그(rf-문자열의 `{3}`) 수정. ⑤ 프로젝트 캐시·탐색 URL은 `https://chatgpt.com/g/g-p-<id>…` 형태만 이동(외부 origin은 이동 없이 dead 처리), 탐색한 프로젝트가 unknown/auth이면 새 프로젝트를 만들지 않음. ⑥ `--force-answer-after`는 결속된 user가 마지막 턴일 때만 클릭. ⑦ `--browser Chrome`과 같은 실행파일의 절대경로는 같은 프로필로 해석.
+- 독립 리뷰(F2, F5) 반영: 업로드 항목은 이 composer의 `파일 등 추가`가 연 메뉴(`aria-expanded=true`)일 때만 사용하고 아니면 파일을 전달하지 않음(`upload_action_unowned`). 첨부 확인과 최종 전송 가드가 같은 제거 버튼 규칙(`Remove <파일명>`/`<파일명> 제거`)을 사용.
+- 패킹 소유 session/group의 signal-0 EPERM을 소멸로 오인하거나 예외로 중단하지 않고 TERM/KILL 종료 절차를 유지. 종료 미확인은 부분 산출물 발행을 차단하고 직접 child wait는 제한 시간을 적용.
+- 전송 함수 내부 중복 click/Enter 차단, 관측한 streaming/unknown 즉시 안정성 무효화, 유효 턴 copy만으로 완료 판단, 활성 현행/구 composer 범위 첨부 확인, TMPDIR 독립 POSIX 잠금. 실제 로컬 Chrome JS 및 서로 다른 TMPDIR의 다중 프로세스 회귀 추가.
+- 레거시 slider 컨테이너 선택자 보완, URL 포착 독립 제한·진행 출력, 지속 오류 표면 조기 중단 및 manifest 우선 복구 안내. `ENOTCACHED`는 오프라인 캐시 누락으로 분류.
+- 현 ChatGPT UI 선택자 및 선택 후 모델/effort 재검증, 실제 표시 provenance 추가.
+- v2 user/assistant identity 복구와 URL-only/legacy 수동 latest-user 회수 구분.
+- streaming 세 상태·scoped 완료 증거·연속 8초 안정·저장 직전 재검증 후 DOM 본문 저장.
+- config 실패 차단, POSIX 보호 staging/log·단조 시계 timeout·후손 종료 확인 및 정제 진단.
+- native endpoint/profile 소유 확인과 실행 잠금. Windows 기존 경로의 미검증 범위 명시.
+- 명시적 강제답변 flag는 유지하고 manifest에 기록. 기본 timeout 자동 강제답변 제거.
+- fixture/subprocess 자체 테스트 추가. 버전은 0.6.8 유지하며 릴리즈·전역 설치 없음. 실제 브라우저 E2E는 별도 수용 대상.
 
 ## 0.6.8 — 2026-09-08
 

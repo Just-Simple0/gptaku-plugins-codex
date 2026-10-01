@@ -74,7 +74,7 @@ python3 "$PLUGIN_ROOT/bin/pack_and_ask.py" --ensure-env
 - **`login=unknown`** (컴포저·로그인 벽 모두 미확인 — 로딩 지연/CF 챌린지 가능. **로그인을 요구하지 말 것**):
   - `cookie=ok`면 세션은 살아있는 것 → `--ensure-env`를 1~2회 재실행해 재점검. 계속 unknown이면 사용자에게 "전용 브라우저 창에 챌린지/오류 화면이 떠 있는지 확인" 요청 (재로그인 아님).
   - `cookie=missing|expired`면 그때만 위 `login=no` 분기와 동일하게 로그인 안내.
-- **`mode=work`** → ChatGPT의 Chat/Work 토글이 **Work**에 놓여 있다. Work 모드엔 Pro 추론단계가 아예 없다(슬라이더에 Pro 눈금 부재). 본 실행 시 스크립트가 모델 스위처를 열기 **전에** `ensure_chat_mode()`로 Chat으로 자동 전환하고, 전환에 실패하면 `--model pro` 전송을 **fail-closed로 중단**한다. 자동 전환이 반복 실패하면 사용자에게 전용 창에서 토글을 Chat으로 바꿔 달라고 한 줄 요청한다. (`mode=chat`·`mode=unknown`은 통과 — 토글이 없는 구 UI/개인 계정은 애초에 분기가 없다.)
+- **`mode=work`** → ChatGPT의 Chat/Work 토글이 **Work**에 놓여 있다. Work 모드엔 Pro 추론단계가 아예 없다(슬라이더에 Pro 눈금 부재). 본 실행 시 스크립트가 모델 스위처를 열기 **전에** `ensure_chat_mode()`로 Chat으로 자동 전환하고, 전환에 실패하면 모델 선택 전 **fail-closed로 중단**한다. 자동 전환이 반복 실패하면 사용자에게 전용 창에서 토글을 Chat으로 바꿔 달라고 한 줄 요청한다. (`mode=chat`과 확인된 `mode=none`은 통과한다. `mode=unknown`은 관측 실패/모순 상태이므로 컨트롤 부재로 간주하지 않고 중단한다.)
 - **`node=missing`** → 선택지(`Node`): "Node.js가 필요합니다(repomix 자동설치에 사용). 설치를 도와드릴까요?" → 1. brew로 설치(`brew install node`) 2. 직접 설치할게요 3. 취소
 
 `STATUS … login=ok`까지 가면 Step 1로. 사용자가 "취소"하면 멈추고 무엇이 남았는지 한 줄로 알려준다.
@@ -128,25 +128,25 @@ python3 "$PLUGIN_ROOT/bin/pack_and_ask.py" --model pro --force-answer-after 90 \
 ```bash
 python3 "$PLUGIN_ROOT/bin/pack_and_ask.py" --harvest '<채팅URL 또는 manifest 경로>'
 ```
-manifest는 전송 직후 대화 URL이 결속되는 즉시 원자적으로 기록되므로, 프로세스가 죽어도 항상 회수 가능하다. 사용량 한도(`quota`)로 멈췄으면 한도 해제 후 같은 명령을 다시 돌린다.
+v2 manifest는 user/assistant identity를 기록하며 복구 시 같은 응답인지 재검증한다. URL-only와 구 manifest는 마지막 user의 답변을 수동 회수하고 `original_run_bound=false`로 기록한다. 원본 legacy manifest는 보존한다. identity 미확인/변경이면 성공 저장하지 않는다.
 
 ## 주의/가드 (실측 기반)
 
 - **git submodule**: 부모 레포 루트에서 서브모듈 파일은 repomix가 제외한다. 서브모듈 안에서 실행하거나 `--target <submodule>` 또는 `--no-gitignore --no-default-patterns`.
 - **압축은 코드 파일만** 줄인다(마크다운/문서 위주 폴더엔 무효).
 - **정밀 리뷰엔 `--force-answer-after`를 쓰지 마라** — Pro 추론을 중간에 끊어 "다 생각 안 한 채" 답하게 만든다(fail-open과 곱해져 미완성 답을 정답 저장). 완전 추론이 더 정확. 안전장치는 `--max-wait`(기본 20분, Pro 검증 시 60분; env `INSANE_REVIEW_MAX_WAIT`/`INSANE_REVIEW_PRO_MAX_WAIT`)만. force-answer는 빠른 의견·짧은 질문·council cap에만.
-- **타임아웃 최후수단(기본 동작)**: 최대 대기 소진 시점에 아직 리즈닝 중이면 스크립트가 자동으로 '지금 답변 받기'를 누르고 `INSANE_REVIEW_FORCE_GRACE`(기본 240s) 추가 대기 후 플러시된 답변을 회수한다 — 장시간 리즈닝 끝에 빈손으로 끝나지 않는다.
+- **timeout/명시적 강제답변**: 기본 timeout은 강제답변 없이 종료한다. 명시적 `--force-answer-after` 요청에서만 클릭하며 성공은 `forced_answer=true`로 manifest와 결과에 남긴다. identity/완료/안정 검증은 생략하지 않는다.
 - **fail-closed**: 첨부 미확인 / Chat 모드 전환 실패(Work 모드엔 Pro 없음) / 모델·추론단계 미검증(`--model pro` 검증 실패, 또는 `--require-model` 사용 시 모델명 불일치) / 대화 URL 포착 실패(`sent-unknown-location`) / timeout·빈 응답은 **성공 저장 안 하고 중단·재시도**한다(잘못된 컨텍스트나 미완성 답을 리뷰로 저장하지 않음).
-- **identity 결속**: 전송 직후 SPA가 발급하는 대화 URL(`/c/<id>`)에 회수를 고정하고(대기 중 이탈하면 자동 복귀), 신규 assistant 턴은 `data-message-id` 차집합으로 판정한다 — 옛 채팅 메시지를 새 응답으로 오인 저장하는 스테일 캡처가 구조적으로 불가. 대화 URL 확보 후의 재시도는 **재전송 없이 같은 채팅에서 회수만** 재시도한다(`not_sent`만 재전송 허용).
-- **스톨 복구**: 전송 후 assistant 턴이 빈 채로 스트리밍 표시 없이 `INSANE_REVIEW_STALL_RELOAD`(기본 45s) 이상 멈추면(클라이언트 스트림 유실 — 서버엔 답이 있음) 결속 URL로 재로드해 회수한다(최대 3회, 재전송 아님).
+- **identity 결속**: URL과 보낸 user/대상 assistant ID를 함께 검증한다. 전송 결과 불명은 자동 재전송하지 않는다. v2 복구는 저장된 identity만 대상으로 한다.
+- **완료 판정**: streaming 부재와 해당 턴 완료 증거를 확인하고 동일 identity/본문/완료 상태가 연속 8초 유지되어야 한다. 조회 불가·대화 이탈은 성공이 아니며 timeout 후 manifest로 재개한다.
 - **사용량 한도 감지**: dialog/alert 표면에서 쿼터 문구를 대조해 `quota`로 조기 종료 — 전송 경로는 재전송 없이 중단, 회수 경로는 재시도 중단 후 `--harvest` 안내. 응답 본문은 스캔하지 않는다(오탐 방지).
-- **클립보드 대조**: copy 회수 시 해당 턴 DOM 텍스트와 대조(80자 미만은 전체 일치, 이상은 3조각) — 대기 중 사용자가 다른 것을 복사한 경합을 걸러내고 DOM 폴백.
+- **본문 회수**: assistant DOM 본문만 저장한다. 공유 user wrapper/클립보드 회수는 사용하지 않는다. Markdown 서식 일부가 달라질 수 있다.
 - **첨부 → 인라인 폴백**: 큰 콘텐츠는 **파일 첨부**가 기본. 첨부가 실패하면 pack이 상한(기본 50,000자, env `INSANE_REVIEW_PASTE_MAX`) 내일 때만 프롬프트에 인라인으로 붙여 보내고, 초과면 fail-closed(잘린 전송 방지). `--attach`는 폴백 없이 첨부만 강제. 패킹 첨부 전송엔 "이번 첨부만 근거로" 가드 한 줄이 자동 부착된다(프로젝트 내 다른 채팅 오염 방지).
 - **실행 중 전용 브라우저 창을 조작하지 말 것** — 사용자에게도 한 줄 고지. (background 모드면 창이 숨어 있어 자연히 안전.)
-- **스테일 CDP·전용 프로필 자가복구**: 전용 브라우저가 떠 있는 동안 디스크에서 자동 업데이트돼 CDP가 깨지거나(`Browser context management is not supported`), 스테일 인스턴스가 디버그 포트를 막는 싱글톤 교착이면 전용 프로필 프로세스만 재기동(쿠키 디스크 보존 → **로그인 유지**)하고 1회 재연결한다. "로그인 풀림"으로 보이던 상황의 상당수가 이 케이스.
+- **native CDP**: macOS는 endpoint/profile 소유와 실행 잠금을 확인한다. 소유가 불명확한 프로세스는 자동 종료하지 않는다. Windows 기존 경로는 유지하지만 새 ownership/concurrency 검증 완료로 표시하지 않는다. Aside override 변경과 실제 브라우저 E2E는 별도 수용 대상이다.
 - **브라우저별 프로필 분리**: 크로미움 계열은 앱마다 쿠키 암호화 키가 달라 같은 프로필을 다른 브라우저로 열면 세션이 통째로 깨진다 — 최초 사용 브라우저가 기존 프로필을 소유하고, 다른 브라우저는 접미사 디렉토리를 쓴다.
 - **CDP 다이얼로그 핸들링**: ChatGPT 페이지의 JS 다이얼로그(beforeunload 등)가 playwright 기본 auto-dismiss와 레이스해 드라이버가 크래시하던 문제를 자체 핸들러로 차단.
-- 실패 시 `--retries N`으로 전송/회수를 재시도(대화 URL 확보 후엔 회수만).
+- 실패 시 `--retries N`으로 결속된 응답의 회수를 재시도한다. 전송 전 검증 실패/전송 결과 불명은 자동 재전송하지 않는다.
 
 ## 채팅 정리 — 폴더명 ChatGPT 프로젝트 (기본 on)
 매 실행이 일반 채팅 목록에 쌓이지 않도록, **현재 폴더명(+경로해시)과 같은 이름의 ChatGPT 프로젝트** 안에 채팅을 정리한다. 폴더당 프로젝트 1개로 묶여 일반 목록이 깨끗하게 유지된다.
